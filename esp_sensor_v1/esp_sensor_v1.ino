@@ -22,6 +22,7 @@ const char* password = "password";
 const char* websockets_server_host = "localhost";
 const uint16_t websockets_server_port = 3000;
 
+
 // change this for every board!!
 String id = "sensorGREEN";
 
@@ -36,7 +37,7 @@ const int LED_TRIGGER_3 = 21;
 int reading = 0;
 int threshold = 0;
 
-bool is_measuring = false;
+bool is_reading = false;
 unsigned long start_time = 0;
 unsigned long current_time = 0;
 unsigned long segment_threshold = 4000;
@@ -73,10 +74,11 @@ void setup() {
   // run callback when messages are received
   client.onMessage([&](WebsocketsMessage message){
       Serial.print("Got Message: ");
-      // something like `threshold-65`
-      // split it
-      // threshold = newdata;
       Serial.println(message.data());
+      // something like `threshold-65`
+      if (message.data().substring(0,8) == "threshold") {
+        threshold = message.data().substring(10).toInt();
+      }
   });
 
   pinMode(LED_COLOR_PIN, OUTPUT);
