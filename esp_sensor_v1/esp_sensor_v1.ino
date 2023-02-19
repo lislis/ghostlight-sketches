@@ -8,6 +8,9 @@
   - Lights a row of LEDs in sensor color
   - Indicates threshold crossing through lighting up another row of LEDs
   
+  Where the LED_TRIGGERs are individually triggerable to indicate status
+  And LED_COLOR_PIN triggers a transistor to light up the color indicator LEDs
+
 */
 
 #include <ArduinoWebsockets.h>
@@ -24,14 +27,19 @@ String id = "sensorGREEN";
 
 using namespace websockets;
 
-const int RESISTANCE_PIN = 19;
+const int RESISTANCE_PIN = A0; // AC1_0 aka GPIO36 aka VP
 const int LED_COLOR_PIN = 4; 
-//const int LED_TRIGGER_1 = 
-//const int LED_TRIGGER_2 =
-// const int LED_TRIGGER_3 =  
+const int LED_TRIGGER_1 = 18;
+const int LED_TRIGGER_2 = 19;
+const int LED_TRIGGER_3 = 21;
 
 int reading = 0;
 int threshold = 0;
+
+bool is_measuring = false;
+unsigned long start_time = 0;
+unsigned long current_time = 0;
+unsigned long segment_threshold = 4000;
 
 WebsocketsClient client;
 void setup() {
@@ -72,6 +80,9 @@ void setup() {
   });
 
   pinMode(LED_COLOR_PIN, OUTPUT);
+  pinMode(LED_TRIGGER_1, OUTPUT);
+  pinMode(LED_TRIGGER_2, OUTPUT);
+  pinMode(LED_TRIGGER_3, OUTPUT);
   pinMode(RESISTANCE_PIN, INPUT);
 }
 
@@ -87,13 +98,37 @@ void loop() {
   String prefix = "sensor-reading___";
   client.send(prefix + id + "___" + reading);
 
-  if (reading > threshold) {
-    // light up power LEDS
-
-    // timer logic
-  } else {
-    // shut down power LEDs
+  if (reading >= threshold && is_reading == false) {
+    is_reading = true;
+    start_time = millis();
+  }
+  if (reading < threshold) {
+    is_reading = false;
+    digitalWrite(LED_TRIGGER_1, LOW);
+    digitalWrite(LED_TRIGGER_2, LOW);
+    digitalWrite(LED_TRIGGER_3, LOW);
   }
 
-  delay(100);
+  if (is_reading == true) {
+    current_time = millis();
+  }
+
+  if (current_time - start_time >= 500) {
+    digitalWrite(LED_TRIGGER_1, HIGH);
+    Serial.print("FIRST LIGHT");
+  }
+
+  if (current_time - start_time >= segment_threshold) {
+    digitalWrite(LED_TRIGGER_2, HIGH);
+    Serial.print("2nd LIGHT");
+  }
+
+  if (current_time - start_time >= segment_threshold) {
+    digitalWrite(LED_TRIGGER_3, HIGH);
+    Serial.print("3rd LIGHT");
+    client.send("sensor_triggered___" + id);
+  }
+
+
+  //delay(100);
 }
