@@ -25,7 +25,10 @@
 const char* ssid = "ghostlike-iot";
 const char* password = "tellittomyheart";
 //const char* websockets_server_host = "172.16.60.180";
+
+
 const char* websockets_server_host = "10.3.141.1";
+//const char* websockets_server_host = "10.3.141.174";
 const uint16_t websockets_server_port = 3000;
 
 // change this for every board!!
